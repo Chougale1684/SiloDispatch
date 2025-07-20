@@ -1,0 +1,47 @@
+# docker-compose.yml
+# version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: silodispatch_db
+    environment:
+      POSTGRES_DB: silodispatch
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: silodispatch_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    # Add environment, volumes, etc. as needed
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_BASE_URL=http://backend:5000
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
